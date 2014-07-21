@@ -1286,8 +1286,8 @@ sd_register_conf_dpc(bt_private * priv)
         if (BT_STATUS_SUCCESS != bt_init_config(priv, init_cfg)) {
             PRINTM(FATAL, "BT: Set user init data and param failed\n");
             /* UnRegister to HCI Core */
-			if (hci_unregister_dev(hdev) < 0)
-				PRINTM(ERROR, "Can not unregister HCI device %s\n", hdev->name);
+//			if (hci_unregister_dev(hdev) < 0)
+//				PRINTM(ERROR, "Can not unregister HCI device %s\n", hdev->name);
             ret = BT_STATUS_FAILURE;
             goto done;
         } else {
@@ -1457,8 +1457,8 @@ bt_remove_card(void *card)
     sbi_unregister_dev(priv);
 
     /* UnRegister to HCI Core */
-    if (hci_unregister_dev(hdev) < 0)
-		PRINTM(ERROR, "Can not unregister HCI device %s\n", hdev->name);
+//    if (hci_unregister_dev(hdev) < 0)
+//		PRINTM(ERROR, "Can not unregister HCI device %s\n", hdev->name);
     hci_free_dev(hdev);
     priv->bt_dev.hcidev = NULL;
     PRINTM(INFO, "BT: Free Adapter\n");

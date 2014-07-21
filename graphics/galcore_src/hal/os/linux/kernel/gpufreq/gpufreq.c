@@ -61,7 +61,7 @@ struct __gpufreq_global {
 
 #define GPU_ELEM(var, gpu) gpufreq_global[gpu].var
 
-static int lock_policy_rwsem_read(int gpu)
+static int lock_policy_rwsem_read_gpu(int gpu)
 {
     int policy_gpu = GPU_ELEM(gpufreq_policy_gpu, gpu);
     BUG_ON(policy_gpu == -1);
@@ -69,7 +69,7 @@ static int lock_policy_rwsem_read(int gpu)
     return 0;
 }
 
-static int lock_policy_rwsem_write(int gpu)
+static int lock_policy_rwsem_write_gpu(int gpu)
 {
     int policy_gpu = GPU_ELEM(gpufreq_policy_gpu, gpu);
     BUG_ON(policy_gpu == -1);
@@ -77,14 +77,14 @@ static int lock_policy_rwsem_write(int gpu)
     return 0;
 }
 
-static void unlock_policy_rwsem_read(int gpu)
+static void unlock_policy_rwsem_read_gpu(int gpu)
 {
     int policy_gpu = GPU_ELEM(gpufreq_policy_gpu, gpu);
     BUG_ON(policy_gpu == -1);
     up_read(&GPU_ELEM(gpufreq_policy_rwsem, policy_gpu));
 }
 
-static void unlock_policy_rwsem_write(int gpu)
+static void unlock_policy_rwsem_write_gpu(int gpu)
 {
     int policy_gpu = GPU_ELEM(gpufreq_policy_gpu, gpu);
     BUG_ON(policy_gpu == -1);
@@ -317,7 +317,7 @@ static ssize_t show(struct kobject *kobj, struct attribute *attr, char *buf)
     if(!policy)
         goto no_policy;
 
-    if (lock_policy_rwsem_read(policy->gpu) < 0)
+    if (lock_policy_rwsem_read_gpu(policy->gpu) < 0)
         goto fail;
 
     if (fattr->show)
@@ -325,7 +325,7 @@ static ssize_t show(struct kobject *kobj, struct attribute *attr, char *buf)
     else
         ret = -EIO;
 
-    unlock_policy_rwsem_read(policy->gpu);
+    unlock_policy_rwsem_read_gpu(policy->gpu);
 
 fail:
     gpufreq_policy_put(policy);
@@ -344,7 +344,7 @@ static ssize_t store(struct kobject *kobj, struct attribute *attr,
     if(!policy)
         goto no_policy;
 
-    if (lock_policy_rwsem_write(policy->gpu) < 0)
+    if (lock_policy_rwsem_write_gpu(policy->gpu) < 0)
         goto fail;
 
     if (fattr->show)
@@ -352,7 +352,7 @@ static ssize_t store(struct kobject *kobj, struct attribute *attr,
     else
         ret = -EIO;
 
-    unlock_policy_rwsem_write(policy->gpu);
+    unlock_policy_rwsem_write_gpu(policy->gpu);
 
 fail:
     gpufreq_policy_put(policy);
@@ -473,7 +473,7 @@ static int gpufreq_add_dev(struct gcsDEVOBJECT *pDevObj)
 
     policy->gpu = gpu;
     GPU_ELEM(gpufreq_policy_gpu, gpu) = gpu;
-    ret = lock_policy_rwsem_write(gpu);
+    ret = lock_policy_rwsem_write_gpu(gpu);
 
     /* completion for sysfs create/release */
     init_completion(&policy->kobj_unregister);
@@ -503,7 +503,7 @@ static int gpufreq_add_dev(struct gcsDEVOBJECT *pDevObj)
         goto err_out;
     }
 
-    unlock_policy_rwsem_write(gpu);
+    unlock_policy_rwsem_write_gpu(gpu);
     kobject_uevent(&policy->kobj, KOBJ_ADD);
 
     debug_log(GPUFREQ_LOG_INFO, "add dev complete.\n");
@@ -511,7 +511,7 @@ static int gpufreq_add_dev(struct gcsDEVOBJECT *pDevObj)
     return 0;
 
 err_out:
-    unlock_policy_rwsem_write(gpu);
+    unlock_policy_rwsem_write_gpu(gpu);
 nomem_out:
     return ret;
 }
@@ -583,12 +583,12 @@ int gpufreq_driver_target(IN struct gpufreq_policy *policy,
     if(!policy)
         goto no_policy;
 
-    if(unlikely(lock_policy_rwsem_write(policy->gpu)))
+    if(unlikely(lock_policy_rwsem_write_gpu(policy->gpu)))
         goto lock_fail;
 
     ret = __gpufreq_driver_target(policy, target_freq, relation);
 
-    unlock_policy_rwsem_write(policy->gpu);
+    unlock_policy_rwsem_write_gpu(policy->gpu);
 
 lock_fail:
     gpufreq_policy_put(policy);
@@ -730,7 +730,7 @@ static int gpufreq_update_policy(unsigned int gpu)
         goto out;
     }
 
-    if (unlikely(lock_policy_rwsem_write(gpu)))
+    if (unlikely(lock_policy_rwsem_write_gpu(gpu)))
     {
         ret = -EINVAL;
         goto out_policy;
@@ -743,7 +743,7 @@ static int gpufreq_update_policy(unsigned int gpu)
 
     ret = _gpufreq_set_policy(policy, &new_policy);
 
-    unlock_policy_rwsem_write(gpu);
+    unlock_policy_rwsem_write_gpu(gpu);
 
 out_policy:
     gpufreq_policy_put(policy);
